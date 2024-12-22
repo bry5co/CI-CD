@@ -64,5 +64,5 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl set image deployment/your-deployment-name your-container-name=bry5co/ci-cd:latest
-          kubectl rollout restart deployment/your-deployment-name
+          kubectl set image deployment/my-app-deployment my-container=bry5co/ci-cd:latest
+kubectl rollout restart deployment/my-app-deployment
