@@ -64,5 +64,7 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
+          # Actualizar la imagen del contenedor en el despliegue
           kubectl set image deployment/my-app-deployment my-container=bry5co/ci-cd:latest
+          # Reiniciar el despliegue para aplicar cambios
           kubectl rollout restart deployment/my-app-deployment
