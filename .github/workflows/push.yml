@@ -13,12 +13,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}  # Usar secret para nombre de usuario
+          password: ${{ secrets.DOCKER_PASSWORD }}  # Usar secret para contraseña
+
       - name: Build and push to Docker
         uses: docker/build-push-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          repository: bry5co/ci-cd  # Nombre del repositorio en Docker Hub
+          context: .  # El contexto de la imagen Docker
+          file: ./Dockerfile  # Ruta al Dockerfile
+          push: true  # Activar el push a Docker Hub
           tags: |
-            latest
-            ${{ github.sha }}
+            bry5co/ci-cd:latest
+            bry5co/ci-cd:${{ github.sha }}
