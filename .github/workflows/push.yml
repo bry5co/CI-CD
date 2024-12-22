@@ -62,6 +62,11 @@ jobs:
                 client-key: $(pwd)/client.key
           " > ~/.kube/config
 
+      - name: Check Kubernetes config
+        run: |
+          kubectl config view
+          kubectl cluster-info
+
       - name: Deploy to Kubernetes
         run: |
           # Actualizar la imagen del contenedor en el despliegue
