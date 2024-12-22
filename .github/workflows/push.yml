@@ -18,7 +18,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          repository: ${{ github.repository }}
+          repository: bry5co/ci-cd  # Nombre del repositorio en Docker Hub
           tags: |
             latest
             ${{ github.sha }}
