@@ -1,56 +1,52 @@
 on:
   push:
     branches:
-      - main  # Ajusta la rama según sea necesario
+      - main
 
 name: deploy
 
 jobs:
-  deploy_to_cluster:  # Nombre del trabajo
-    runs-on: ubuntu-latest  # Usa la versión más reciente de Ubuntu
+  deploy_to_cluster:
+    runs-on: ubuntu-latest
 
     steps:
-      # Paso 1: Checkout del código del repositorio
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Paso 2: Login a Docker Hub
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}  # Usar secret para nombre de usuario
-          password: ${{ secrets.DOCKER_PASSWORD }}  # Usar secret para contraseña
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Paso 3: Construir y subir la imagen Docker a Docker Hub
       - name: Build and push to Docker
         uses: docker/build-push-action@v2
         with:
-          context: .  # El contexto de la imagen Docker
-          file: ./Dockerfile  # Ruta al Dockerfile
-          push: true  # Activar el push a Docker Hub
+          context: .
+          file: ./Dockerfile
+          push: true
           tags: |
             bry5co/ci-cd:latest
             bry5co/ci-cd:${{ github.sha }}
 
-      # Paso 4: Configuración de kubectl
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v1  # Cambié a la versión v1
+        uses: azure/setup-kubectl@v1
         with:
-          version: 'v1.21.2'  # O la versión que estás utilizando de Kubernetes
+          version: 'v1.21.2'
 
-      # Paso 5: Configuración de Kubernetes usando secretos base64
       - name: Configure Kubernetes access
         run: |
-          echo "$KUBE_CA_CRT" | base64 -d > ca.crt  # Uso de base64 con la opción -d para decodificar
-          echo "$KUBE_CLIENT_CRT" | base64 -d > client.crt  # Uso de base64 con la opción -d para decodificar
-          echo "$KUBE_CLIENT_KEY" | base64 -d > client.key  # Uso de base64 con la opción -d para decodificar
+          # Decodificar secretos base64 a archivos
+          echo "$KUBE_CA_CRT" | base64 -d > ca.crt
+          echo "$KUBE_CLIENT_CRT" | base64 -d > client.crt
+          echo "$KUBE_CLIENT_KEY" | base64 -d > client.key
           mkdir -p ~/.kube
           echo "
           apiVersion: v1
           clusters:
             - cluster:
                 certificate-authority: $(pwd)/ca.crt
-                server: https://172.31.93.137:8443  # Ajusta la IP y el puerto de tu Minikube si es necesario
+                server: https://172.31.93.137:8443
               name: minikube
           contexts:
             - context:
@@ -66,8 +62,6 @@ jobs:
                 client-key: $(pwd)/client.key
           " > ~/.kube/config
 
-
-      # Paso 6: Actualizar el despliegue en Kubernetes con la nueva imagen
       - name: Deploy to Kubernetes
         run: |
           kubectl set image deployment/your-deployment-name your-container-name=bry5co/ci-cd:latest
