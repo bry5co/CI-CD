@@ -66,6 +66,7 @@ jobs:
                 client-key: $(pwd)/client.key
           " > ~/.kube/config
 
+
       # Paso 6: Actualizar el despliegue en Kubernetes con la nueva imagen
       - name: Deploy to Kubernetes
         run: |
