@@ -10,15 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Paso 1: Checkout del código del repositorio
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Paso 2: Login a Docker Hub
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}  # Usar secret para nombre de usuario
           password: ${{ secrets.DOCKER_PASSWORD }}  # Usar secret para contraseña
 
+      # Paso 3: Construir y subir la imagen Docker a Docker Hub
       - name: Build and push to Docker
         uses: docker/build-push-action@v2
         with:
@@ -28,3 +31,43 @@ jobs:
           tags: |
             bry5co/ci-cd:latest
             bry5co/ci-cd:${{ github.sha }}
+
+      # Paso 4: Configuración de kubectl
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v2
+        with:
+          version: 'v1.21.2'  # O la versión que estás utilizando de Kubernetes
+
+      # Paso 5: Configuración de Kubernetes usando secretos base64
+      - name: Configure Kubernetes access
+        run: |
+          echo "$KUBE_CA_CRT" | base64 --decode > ca.crt
+          echo "$KUBE_CLIENT_CRT" | base64 --decode > client.crt
+          echo "$KUBE_CLIENT_KEY" | base64 --decode > client.key
+          mkdir -p ~/.kube
+          echo "
+          apiVersion: v1
+          clusters:
+            - cluster:
+                certificate-authority: $(pwd)/ca.crt
+                server: https://172.31.93.137:8443  # Ajusta la IP y el puerto de tu Minikube si es necesario
+              name: minikube
+          contexts:
+            - context:
+                cluster: minikube
+                user: minikube
+              name: minikube
+          current-context: minikube
+          kind: Config
+          users:
+            - name: minikube
+              user:
+                client-certificate: $(pwd)/client.crt
+                client-key: $(pwd)/client.key
+          " > ~/.kube/config
+
+      # Paso 6: Actualizar el despliegue en Kubernetes con la nueva imagen
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/your-deployment-name your-container-name=bry5co/ci-cd:latest
+          kubectl rollout restart deployment/your-deployment-name
