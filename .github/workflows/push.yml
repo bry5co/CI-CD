@@ -67,20 +67,19 @@ jobs:
               client-certificate: /home/runner/.kube/client.crt
               client-key: /home/runner/.kube/client.key
           " > $HOME/.kube/config
-          
-  test-connectivity:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Check Kubernetes connectivity
-      run: |
-        telnet <ip-publica-de-k8s> 8443 || echo "Cannot connect to Kubernetes API"
-      # Paso 6: Verificar la configuración de Kubernetes
+      
+      # Paso 6: Verificar la conectividad con Kubernetes
+      - name: Check Kubernetes connectivity
+        run: |
+          telnet 172.31.6.223 8443 || echo "Cannot connect to Kubernetes API"
+
+      # Paso 7: Verificar la configuración de Kubernetes
       - name: Check Kubernetes config
         run: |
           kubectl config view
           kubectl cluster-info
 
-      # Paso 7: Desplegar en Kubernetes
+      # Paso 8: Desplegar en Kubernetes
       - name: Deploy to Kubernetes
         run: |
           kubectl set image deployment/my-app-deployment my-container=bry5co/ci-cd:latest
