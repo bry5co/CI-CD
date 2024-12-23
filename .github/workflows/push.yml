@@ -1,86 +1,60 @@
-name: deploy
+name: CI/CD Pipeline for Kubernetes Deployment
 
 on:
   push:
     branches:
-      - main
+      - main  # Este pipeline se ejecutará solo cuando se realice un push a la rama principal (main)
 
 jobs:
-  deploy_to_cluster:
-    runs-on: ubuntu-latest
+  build_and_push:
+    runs-on: ubuntu-latest  # Usamos Ubuntu como entorno de ejecución
 
     steps:
-      # Paso 1: Checkout del repositorio
+      # Paso 1: Checkout del código del repositorio
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Paso 2: Login a DockerHub
-      - name: Login to DockerHub
+      # Paso 2: Loguearse a DockerHub
+      - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKER_USERNAME }}  # Añadir tu usuario en secrets de GitHub
+          password: ${{ secrets.DOCKER_PASSWORD }}  # Añadir tu contraseña en secrets de GitHub
 
-      # Paso 3: Build y push de la imagen a DockerHub
-      - name: Build and push to Docker
+      # Paso 3: Construir y Push de la imagen Docker a DockerHub
+      - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
-          context: .
-          file: ./Dockerfile
-          push: true
+          context: .  # El contexto es el directorio del repositorio
+          file: ./Dockerfile  # Ruta del Dockerfile que se usará para construir la imagen
+          push: true  # Se empujará la imagen a DockerHub
           tags: |
-            bry5co/ci-cd:latest
-            bry5co/ci-cd:${{ github.sha }}
+            your-dockerhub-username/your-repo:latest
+            your-dockerhub-username/your-repo:${{ github.sha }}
 
-      # Paso 4: Configuración de kubectl
+  deploy_to_kubernetes:
+    runs-on: ubuntu-latest  # Usamos Ubuntu como entorno de ejecución
+    needs: build_and_push  # Este job depende del anterior para construirse
+
+    steps:
+      # Paso 1: Checkout del código del repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Paso 2: Configuración de kubectl (suponiendo que Docker Desktop está habilitado con Kubernetes)
       - name: Set up kubectl
         uses: azure/setup-kubectl@v1
         with:
-          version: 'v1.21.2'
+          version: 'v1.21.2'  # Puedes cambiar la versión si lo necesitas
 
-      # Paso 5: Crear el archivo kubeconfig desde los archivos en el repositorio
-      - name: Create kubeconfig from local files
+      # Paso 3: Verificar conectividad con el clúster Kubernetes de Docker Desktop
+      - name: Check Kubernetes cluster connection
         run: |
-          mkdir -p $HOME/.kube
-          cp k8s-secrets/ca.crt $HOME/.kube/ca.crt
-          cp k8s-secrets/client.crt $HOME/.kube/client.crt
-          cp k8s-secrets/client.key $HOME/.kube/client.key
-
-          # Crear el kubeconfig utilizando la IP obtenida
-          echo "
-          apiVersion: v1
-          clusters:
-          - cluster:
-              certificate-authority: /home/runner/.kube/ca.crt
-              server: http://172.31.6.223:31407
-            name: minikube
-          contexts:
-          - context:
-              cluster: minikube
-              user: minikube
-            name: minikube
-          current-context: minikube
-          kind: Config
-          users:
-          - name: minikube
-            user:
-              client-certificate: /home/runner/.kube/client.crt
-              client-key: /home/runner/.kube/client.key
-          " > $HOME/.kube/config
-
-      # Paso 6: Verificar la conectividad con Kubernetes
-      - name: Check Kubernetes connectivity
-        run: |
-          kubectl version --client
           kubectl cluster-info
+          kubectl get nodes
 
-      # Paso 7: Verificar si el clúster está accesible antes de proceder con el despliegue
-      - name: Test Kubernetes connectivity
-        run: |
-          kubectl get nodes || echo "Cannot connect to Kubernetes API"
-
-      # Paso 8: Desplegar en Kubernetes
+      # Paso 4: Desplegar la imagen Docker en Kubernetes
       - name: Deploy to Kubernetes
         run: |
-          kubectl set image deployment/my-app-deployment my-container=bry5co/ci-cd:latest
+          kubectl set image deployment/my-app-deployment my-container=your-dockerhub-username/your-repo:latest
           kubectl rollout restart deployment/my-app-deployment
