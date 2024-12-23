@@ -52,7 +52,7 @@ jobs:
           clusters:
           - cluster:
               certificate-authority: /home/runner/.kube/ca.crt
-              server: https://172.31.6.223:8443
+              server: https://$(minikube service my-app --url | sed 's/http:\/\///g')
             name: minikube
           contexts:
           - context:
@@ -67,17 +67,17 @@ jobs:
               client-certificate: /home/runner/.kube/client.crt
               client-key: /home/runner/.kube/client.key
           " > $HOME/.kube/config
-      
+
       # Paso 6: Verificar la conectividad con Kubernetes
       - name: Check Kubernetes connectivity
         run: |
-          telnet 172.31.6.223 8443 || echo "Cannot connect to Kubernetes API"
-
-      # Paso 7: Verificar la configuración de Kubernetes
-      - name: Check Kubernetes config
-        run: |
-          kubectl config view
+          kubectl version --client
           kubectl cluster-info
+
+      # Paso 7: Verificar si el clúster está accesible antes de proceder con el despliegue
+      - name: Test Kubernetes connectivity
+        run: |
+          kubectl get nodes || echo "Cannot connect to Kubernetes API"
 
       # Paso 8: Desplegar en Kubernetes
       - name: Deploy to Kubernetes
