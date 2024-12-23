@@ -14,4 +14,6 @@ spec:
     spec:
       containers:
       - name: my-container
-        image: my-app-image:latest
+        image: my-app-image:latest  # La imagen construida en el paso anterior
+        ports:
+        - containerPort: 8080

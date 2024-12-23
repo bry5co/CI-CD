@@ -27,3 +27,17 @@ jobs:
     - name: Build Docker image
       run: |
         docker build -t my-app-image .
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v1
+      with:
+        version: 'latest'
+
+    - name: Configure kubeconfig
+      run: |
+        echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+        export KUBECONFIG=kubeconfig.yaml
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f deployment.yaml
