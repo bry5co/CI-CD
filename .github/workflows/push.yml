@@ -38,21 +38,37 @@ jobs:
         with:
           version: 'v1.21.2'
 
-      # Paso 5: Crear y configurar kubeconfig desde los secretos de GitHub
-      - name: Create kubeconfig from GitHub Secret
+      # Paso 5: Crear el archivo kubeconfig desde los archivos en el repositorio
+      - name: Create kubeconfig from local files
         run: |
           mkdir -p $HOME/.kube
-          echo "$KUBE_CONFIG" > $HOME/.kube/config
-          echo "$KUBE_CA_CERT" > $HOME/.kube/ca.crt
-          echo "$KUBE_CLIENT_CERT" > $HOME/.kube/client.crt
-          echo "$KUBE_CLIENT_KEY" > $HOME/.kube/client.key
-        env:
-          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
-          KUBE_CA_CERT: ${{ secrets.KUBE_CA_CERT }}
-          KUBE_CLIENT_CERT: ${{ secrets.KUBE_CLIENT_CERT }}
-          KUBE_CLIENT_KEY: ${{ secrets.KUBE_CLIENT_KEY }}
+          cp k8s-secrets/ca.crt $HOME/.kube/ca.crt
+          cp k8s-secrets/client.crt $HOME/.kube/client.crt
+          cp k8s-secrets/client.key $HOME/.kube/client.key
 
-      # Paso 6: Verificar configuración de Kubernetes
+          # Crear el kubeconfig utilizando las rutas locales
+          echo "
+          apiVersion: v1
+          clusters:
+          - cluster:
+              certificate-authority: /home/runner/.kube/ca.crt
+              server: https://172.31.6.223:8443
+            name: minikube
+          contexts:
+          - context:
+              cluster: minikube
+              user: minikube
+            name: minikube
+          current-context: minikube
+          kind: Config
+          users:
+          - name: minikube
+            user:
+              client-certificate: /home/runner/.kube/client.crt
+              client-key: /home/runner/.kube/client.key
+          " > $HOME/.kube/config
+
+      # Paso 6: Verificar la configuración de Kubernetes
       - name: Check Kubernetes config
         run: |
           kubectl config view
