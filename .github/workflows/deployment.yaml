@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: my-app
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: my-app
@@ -13,7 +13,5 @@ spec:
         app: my-app
     spec:
       containers:
-      - name: my-app-container
-        image: bry5co/ci-cd:latest
-        ports:
-        - containerPort: 80
+      - name: my-container
+        image: my-app-image:latest
