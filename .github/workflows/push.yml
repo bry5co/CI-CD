@@ -1,24 +1,27 @@
+name: deploy
+
 on:
   push:
     branches:
       - main
-
-name: deploy
 
 jobs:
   deploy_to_cluster:
     runs-on: ubuntu-latest
 
     steps:
+      # Paso 1: Checkout del repositorio
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Paso 2: Login a DockerHub
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Paso 3: Build y push de la imagen a DockerHub
       - name: Build and push to Docker
         uses: docker/build-push-action@v2
         with:
@@ -29,51 +32,34 @@ jobs:
             bry5co/ci-cd:latest
             bry5co/ci-cd:${{ github.sha }}
 
+      # Paso 4: Configuración de kubectl
       - name: Set up kubectl
         uses: azure/setup-kubectl@v1
         with:
           version: 'v1.21.2'
 
-      - name: Configure Kubernetes access
+      # Paso 5: Crear y configurar kubeconfig desde los secretos de GitHub
+      - name: Create kubeconfig from GitHub Secret
         run: |
-          # Crear el directorio .kube si no existe
-          mkdir -p ~/.kube
+          mkdir -p $HOME/.kube
+          echo "$KUBE_CONFIG" > $HOME/.kube/config
+          echo "$KUBE_CA_CERT" > $HOME/.kube/ca.crt
+          echo "$KUBE_CLIENT_CERT" > $HOME/.kube/client.crt
+          echo "$KUBE_CLIENT_KEY" > $HOME/.kube/client.key
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+          KUBE_CA_CERT: ${{ secrets.KUBE_CA_CERT }}
+          KUBE_CLIENT_CERT: ${{ secrets.KUBE_CLIENT_CERT }}
+          KUBE_CLIENT_KEY: ${{ secrets.KUBE_CLIENT_KEY }}
 
-          # Decodificar secretos base64 a archivos
-          echo "$KUBE_CA_CRT" | base64 -d > $HOME/.kube/ca.crt
-          echo "$KUBE_CLIENT_CRT" | base64 -d > $HOME/.kube/client.crt
-          echo "$KUBE_CLIENT_KEY" | base64 -d > $HOME/.kube/client.key
-
-          # Escribir la configuración de Kubernetes
-          echo "
-          apiVersion: v1
-          clusters:
-            - cluster:
-                certificate-authority: $HOME/.kube/ca.crt
-                server: https://172.31.93.137:8443
-              name: minikube
-          contexts:
-            - context:
-                cluster: minikube
-                user: minikube
-              name: minikube
-          current-context: minikube
-          kind: Config
-          users:
-            - name: minikube
-              user:
-                client-certificate: $HOME/.kube/client.crt
-                client-key: $HOME/.kube/client.key
-          " > $HOME/.kube/config
-
+      # Paso 6: Verificar configuración de Kubernetes
       - name: Check Kubernetes config
         run: |
           kubectl config view
           kubectl cluster-info
 
+      # Paso 7: Desplegar en Kubernetes
       - name: Deploy to Kubernetes
         run: |
-          # Actualizar la imagen del contenedor en el despliegue
           kubectl set image deployment/my-app-deployment my-container=bry5co/ci-cd:latest
-          # Reiniciar el despliegue para aplicar cambios
           kubectl rollout restart deployment/my-app-deployment
