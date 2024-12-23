@@ -46,16 +46,13 @@ jobs:
           cp k8s-secrets/client.crt $HOME/.kube/client.crt
           cp k8s-secrets/client.key $HOME/.kube/client.key
 
-          # Obtener la IP pública del servicio LoadBalancer
-          MINIKUBE_IP=$(minikube service my-app --url | sed 's/http:\/\///g')
-
           # Crear el kubeconfig utilizando la IP obtenida
           echo "
           apiVersion: v1
           clusters:
           - cluster:
               certificate-authority: /home/runner/.kube/ca.crt
-              server: https://$MINIKUBE_IP
+              server: http://172.31.6.223:31407
             name: minikube
           contexts:
           - context:
