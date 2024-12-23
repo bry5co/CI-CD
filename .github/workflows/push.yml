@@ -35,32 +35,33 @@ jobs:
           version: 'v1.21.2'
 
       - name: Configure Kubernetes access
-        run: |
-          # Decodificar secretos base64 a archivos
-          echo "$KUBE_CA_CRT" | base64 -d > ca.crt
-          echo "$KUBE_CLIENT_CRT" | base64 -d > client.crt
-          echo "$KUBE_CLIENT_KEY" | base64 -d > client.key
-          mkdir -p ~/.kube
-          echo "
-          apiVersion: v1
-          clusters:
-            - cluster:
-                certificate-authority: C:\Users\bryan\.minikube\ca.crt
-                server: https://172.31.93.137:8443
-              name: minikube
-          contexts:
-            - context:
-                cluster: minikube
-                user: minikube
-              name: minikube
-          current-context: minikube
-          kind: Config
-          users:
-            - name: minikube
-              user:
-                client-certificate: C:\Users\bryan\.minikube\profiles\minikube\client.crt
-                client-key: C:\Users\bryan\.minikube\profiles\minikube\client.key
-          " > ~/.kube/config
+  run: |
+    # Decodificar secretos base64 a archivos
+    echo "$KUBE_CA_CRT" | base64 -d > ~/.kube/ca.crt
+    echo "$KUBE_CLIENT_CRT" | base64 -d > ~/.kube/client.crt
+    echo "$KUBE_CLIENT_KEY" | base64 -d > ~/.kube/client.key
+    mkdir -p ~/.kube
+    echo "
+    apiVersion: v1
+    clusters:
+      - cluster:
+          certificate-authority: ~/.kube/ca.crt
+          server: https://172.31.93.137:8443
+        name: minikube
+    contexts:
+      - context:
+          cluster: minikube
+          user: minikube
+        name: minikube
+    current-context: minikube
+    kind: Config
+    users:
+      - name: minikube
+        user:
+          client-certificate: ~/.kube/client.crt
+          client-key: ~/.kube/client.key
+    " > ~/.kube/config
+
 
       - name: Check Kubernetes config
         run: |
