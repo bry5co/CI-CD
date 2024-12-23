@@ -29,8 +29,8 @@ jobs:
           file: ./Dockerfile  # Ruta del Dockerfile que se usará para construir la imagen
           push: true  # Se empujará la imagen a DockerHub
           tags: |
-            your-dockerhub-username/your-repo:latest
-            your-dockerhub-username/your-repo:${{ github.sha }}
+            bry5co/ci-cd:latest
+            bry5co/ci-cd:${{ github.sha }}
 
   deploy_to_kubernetes:
     runs-on: ubuntu-latest  # Usamos Ubuntu como entorno de ejecución
@@ -56,5 +56,5 @@ jobs:
       # Paso 4: Desplegar la imagen Docker en Kubernetes
       - name: Deploy to Kubernetes
         run: |
-          kubectl set image deployment/my-app-deployment my-container=your-dockerhub-username/your-repo:latest
+          kubectl set image deployment/my-app-deployment my-container=bry5co/ci-cd:latest
           kubectl rollout restart deployment/my-app-deployment
