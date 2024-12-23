@@ -45,7 +45,7 @@ jobs:
           apiVersion: v1
           clusters:
             - cluster:
-                certificate-authority: $(pwd)/ca.crt
+                certificate-authority: C:\Users\bryan\.minikube\ca.crt
                 server: https://172.31.93.137:8443
               name: minikube
           contexts:
@@ -58,8 +58,8 @@ jobs:
           users:
             - name: minikube
               user:
-                client-certificate: $(pwd)/client.crt
-                client-key: $(pwd)/client.key
+                client-certificate: C:\Users\bryan\.minikube\profiles\minikube\client.crt
+                client-key: C:\Users\bryan\.minikube\profiles\minikube\client.key
           " > ~/.kube/config
 
       - name: Check Kubernetes config
