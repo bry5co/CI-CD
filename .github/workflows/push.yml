@@ -40,16 +40,16 @@ jobs:
           mkdir -p ~/.kube
 
           # Decodificar secretos base64 a archivos
-          echo "$KUBE_CA_CRT" | base64 -d > ~/.kube/ca.crt
-          echo "$KUBE_CLIENT_CRT" | base64 -d > ~/.kube/client.crt
-          echo "$KUBE_CLIENT_KEY" | base64 -d > ~/.kube/client.key
+          echo "$KUBE_CA_CRT" | base64 -d > $HOME/.kube/ca.crt
+          echo "$KUBE_CLIENT_CRT" | base64 -d > $HOME/.kube/client.crt
+          echo "$KUBE_CLIENT_KEY" | base64 -d > $HOME/.kube/client.key
 
           # Escribir la configuración de Kubernetes
           echo "
           apiVersion: v1
           clusters:
             - cluster:
-                certificate-authority: ~/.kube/ca.crt
+                certificate-authority: $HOME/.kube/ca.crt
                 server: https://172.31.93.137:8443
               name: minikube
           contexts:
@@ -62,9 +62,9 @@ jobs:
           users:
             - name: minikube
               user:
-                client-certificate: ~/.kube/client.crt
-                client-key: ~/.kube/client.key
-          " > ~/.kube/config
+                client-certificate: $HOME/.kube/client.crt
+                client-key: $HOME/.kube/client.key
+          " > $HOME/.kube/config
 
       - name: Check Kubernetes config
         run: |
